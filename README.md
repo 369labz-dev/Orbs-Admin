@@ -1,34 +1,48 @@
-# Orbs browser admin
+# Orbs Admin
 
-React browser client for the existing Firebase backend. See
-[implementation specification](../Docs/browser-admin-spec.md) for roles and event behavior.
+Browser organizer and redemption portal for Orbs.
 
-## Local development
+- Application: https://369labz-dev.github.io/Orbs-Admin/
+- Backend and Unity client: private `369labz-dev/Orbs-MVP` repository.
+- [Implementation specification](docs/browser-admin-spec.md).
+- [Release record](docs/browser-admin-release.md).
 
-Use Node 22. Install dependencies with `npm ci` in `admin/` and `backend/`.
-Copy `.env.example` to `.env.local` and supply the registered Firebase Web App config
-and a browser-capable Mapbox token. These are public browser configuration values.
-Set `VITE_USE_EMULATORS=true` for local Auth, Firestore and Functions (ports 9099,
-8080 and 5001). Run backend `npm run build` and `npm run emulators`, then admin
-`npm run dev`. Set `ORBS_ADMIN_UIDS` on the backend for organizer accounts.
+## Development
 
-Accounts use Firebase email/password auth. Organizers are allowlisted server-side.
-Create staff accounts in Firebase Auth, then assign event access from Staff.
+Use Node 22. Run `npm ci`, copy `.env.example` to `.env.local`, supply the public
+Firebase Web App configuration and a browser-capable Mapbox token, then `npm run dev`.
+The client uses Firebase email/password accounts and existing functions in
+`europe-west3`. Organizer access and event-scoped staff access are checked server-side.
+
+`src/lib/model.ts` and `adminContract.ts` describe the public client API. Update them
+when the backend API changes. They contain types only; the client has no dependency
+on a local backend checkout or server implementation.
+
+## Acceptance tests
+
+The Playwright tests use the actual backend in Firebase emulators. They require
+access to the private backend repository. From its `backend/` directory, run
+`npm ci` and `npm run build`, then start emulators with `ORBS_ADMIN_UIDS=browser-organizer`
+and `npm run emulators`. Use Auth 9099, Firestore 8080, Database 9000 and Functions 5001.
+
+In this repository, run `npx playwright install chromium` and `npm run test:e2e` with
+`VITE_USE_EMULATORS=true`, `VITE_FIREBASE_API_KEY=fake-api-key`,
+`VITE_FIREBASE_AUTH_DOMAIN=localhost`, `VITE_FIREBASE_PROJECT_ID=orbs-dev`,
+`VITE_FIREBASE_APP_ID=emulator-admin` and
+`VITE_FIREBASE_DATABASE_URL=http://127.0.0.1:9000?ns=orbs-dev`.
+Tests seed dedicated accounts and event fixtures and clear emulator data.
+Do not point acceptance tests at production.
 
 ## Release
 
-Run `npm run build` and backend tests, then browser acceptance tests against emulators.
-Before the first release run `npx tsx tools/admin-migrate.ts` in `backend/` for a dry run;
-add `--apply` to apply reviewed metadata, prize-snapshot and audit-category changes.
-The tool does not alter event state, inventory, scores or geometry.
+Pull requests typecheck and build without production credentials. Main pushes and
+manual dispatch publish Pages through `.github/workflows/pages.yml`. The workflow
+builds with repository variable `FIREBASE_WEB_CONFIG` (Firebase SDK JSON) and secret
+`MAPBOX_TOKEN`, then uploads only `dist/`. Production deployments use `/Orbs-Admin/`
+and hash routes so refresh and direct links work. Source maps are disabled.
 
-Deploy backend functions and committed Firestore indexes before publishing the client.
-Configure repository variable `FIREBASE_WEB_CONFIG` with Firebase SDK JSON and existing
-secret `MAPBOX_TOKEN`. Enable Settings → Pages → GitHub Actions. The Pages workflow
-publishes only `admin/dist` on main; hash routes support direct links and refresh.
+Firebase web configuration and the browser map token are visible in the compiled
+application. Never add service account keys, administrator credentials, deployment
+credentials or organizer UID lists to this public repository.
 
-The repository is private: the organization needs an eligible Pages plan. Publication
-must not make the repository public. Expected URL: https://369labz-dev.github.io/Orbs-MVP/.
-
-CSV exports include all pages, use UTC timestamps, and omit code strings and contacts.
-A report can change after end as issued prizes are redeemed.
+Backend deployments and migrations belong to the private backend repository.

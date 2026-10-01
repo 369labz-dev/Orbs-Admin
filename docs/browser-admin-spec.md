@@ -1,6 +1,6 @@
 # Orbs browser admin — implementation specification
 
-Status: implementation scope agreed; implementation not started.
+Status: implemented; dedicated public client repository approved on 2026-10-01.
 Date: 2026-10-01.
 
 The organizer can prepare, run and review an activation from a browser. A redemption
@@ -16,7 +16,7 @@ marked "existing" describe inspected code; all other requirements describe the t
 
 | Area | Decision |
 |---|---|
-| Repository | Keep `admin/`, `backend/` and Unity in `369labz-dev/Orbs-MVP` |
+| Repository | Public web client in `369labz-dev/Orbs-Admin`; backend and Unity remain private in `369labz-dev/Orbs-MVP` |
 | Web stack | React, TypeScript in strict mode, Vite |
 | Routing | React Router with hash routes, to support refresh and direct links on Pages |
 | UI | Plain CSS and Radix UI primitives for dialogs, tabs and accessible controls |
@@ -36,16 +36,13 @@ Choose supported stable package releases at implementation time and commit the l
 Do not add Next.js, a separate API server, a new database, Redux or a service worker.
 The browser reuses the project's existing Mapbox tile account; no additional map provider account is required.
 
-Expected Pages address: `https://369labz-dev.github.io/Orbs-MVP/`.
-Use Vite `base: '/Orbs-MVP/'` and URLs such as `#/events/<eventId>/map`.
+Expected Pages address: `https://369labz-dev.github.io/Orbs-Admin/`.
+Use Vite `base: '/Orbs-Admin/'` and URLs such as `#/events/<eventId>/map`.
 If a custom domain is configured, switch the build base to `/`.
 
-The repository is private. GitHub documents Pages availability for private repositories
-on eligible paid plans. A read of the current Pages API returned HTTP 404; that does
-not distinguish an unconfigured site from unavailable access. Confirm organization
-entitlement and enable Pages before promising a published URL. Keep the repository
-private. If the organization lacks entitlement, publishing requires an eligible plan;
-changing to another host is a separate deployment decision, not an implicit fallback.
+The client repository is public by explicit user approval. The Unity/backend repository
+remains private. GitHub Pages publishes the compiled client from the public repository;
+Firebase authenticates every administrative operation independently of site visibility.
 
 ## 2. Existing implementation and required changes
 
@@ -75,26 +72,20 @@ must describe and preserve the behavior defined in section 7.
 ## 3. Ownership and repository layout
 
 ```text
-admin/
+Orbs-Admin/                 public client repository
   package.json
   package-lock.json
   vite.config.ts
   index.html
   .env.example
-  src/
-    app/           router, authentication and event selection
-    features/      events, map, settings, inventory, monitor, redemption, staff, reports
-    lib/           Firebase initialization and callable client
-    styles/
-  tests/           critical browser flows
-backend/
-  functions/src/   shared authorization, event handlers and report queries
-  test/
-.github/workflows/
-  admin-checks.yml
-  admin-pages.yml
-Docs/
-  browser-admin-spec.md
+  src/features/            event screens
+  src/lib/                 Firebase client and public API types
+  tests/                   browser acceptance flows
+  docs/                    client specification and release record
+  .github/workflows/       checks.yml and pages.yml
+Orbs-MVP/backend/          private server repository
+  functions/src/           authorization, event handlers and reports
+  test/                    backend emulator contracts
 ```
 
 Backend owns permission checks, inventory reservation, code issuance/redemption,
@@ -102,9 +93,9 @@ event transitions, launch checks, valid placement, timestamps and reports. Exist
 spawning and lifecycle components continue to own spawning and scheduling. React
 owns draft forms, editing gestures, presentation and explicit requests.
 
-Keep shared administrative request/response types in
-`backend/functions/src/adminContract.ts`. They must contain no Admin SDK imports.
-The web app uses type-only imports; runtime server code must not enter the bundle.
+Backend request/response types remain in `backend/functions/src/adminContract.ts`.
+The standalone client maintains matching public types in `src/lib/adminContract.ts`
+and `model.ts`. These contain no Admin SDK imports. Runtime server code must not enter the bundle.
 Use a discriminated action union for new calls. Keep the existing Unity payload and
 response fields compatible, including `access: { ok, isAdmin }`.
 
@@ -725,14 +716,13 @@ SMTP secrets, deployment tokens or `ORBS_ADMIN_UIDS`. Display environment and bu
 commit in an About footer. Production build fails if required config is absent or
 emulator mode is enabled.
 
-`admin-checks.yml`: on relevant pull requests, `npm ci`, lint/typecheck/build, backend
-checks when backend/contracts change, and critical emulator browser flows. Use generated
-test accounts/events. PR checks have no production deployment credentials.
+`checks.yml`: pull requests install dependencies and typecheck/build without production
+credentials. Backend Vitest tests remain in the private repository. Critical Playwright
+flows use the real backend emulators and generated accounts/events; see the README.
 
-`admin-pages.yml`: on main changes to admin/contract/workflow and `workflow_dispatch`,
-build the web bundle, upload only `admin/dist` using the Pages artifact action and deploy
-using the Pages deploy action. Use `contents: read`, `pages: write`, `id-token: write`
-with Pages deployment concurrency. Configure repository Settings → Pages → GitHub Actions.
+`pages.yml`: on main pushes and `workflow_dispatch`, build the web bundle, upload only
+`dist` and deploy with the Pages action. Use `contents: read`, `pages: write`,
+`id-token: write` and Pages deployment concurrency. Set Pages to GitHub Actions.
 Never upload backend directories, Unity assets or an environment file.
 
 Provisioning sequence:
@@ -831,7 +821,7 @@ Do not add tests that merely repeat markup or library implementation.
 ### Deployment and usability
 
 - Pages publication succeeds on the private repository's actual entitled configuration.
-- Direct hash link and refresh load the app and assets at `/Orbs-MVP/` without 404.
+- Direct hash link and refresh load the app and assets at `/Orbs-Admin/` without 404.
 - Published JS contains no server credentials; backend protection works independently of URL access.
 - Redeem works at 360 px; organizer map editing works at 768 px and desktop widths.
 - Current stable Chrome, Firefox, desktop Safari and iOS Safari pass critical flows;
@@ -853,8 +843,8 @@ There is no dependency on those features to accept the release described above.
 
 ## 20. Sources
 
-- Product requirement: [Mechanics #2 and following-stage comment](https://github.com/369labz-dev/Orbs-MVP/issues/2#issuecomment-5743795176).
-- Current repository behavior: [Unity admin](admin-screen.md), [backend status](live-backend-status.md)
+- Product requirement: [Mechanics #2 and following-stage comment](https://github.com/369labz-dev/Orbs-Admin/issues/2#issuecomment-5743795176).
+- Current repository behavior: `Orbs-MVP/Docs/admin-screen.md`, `Orbs-MVP/Docs/live-backend-status.md`
   and the inspected source files listed in section 2. Source code takes precedence over older behavior notes.
 - Static build/base path: [Vite static deployment](https://vite.dev/guide/static-deploy.html).
 - Private-repository availability and deployment: [GitHub Pages publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)

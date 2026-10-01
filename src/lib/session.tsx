@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Dialog from '@radix-ui/react-dialog';
 import { auth, adminCall } from './firebase';
-import type { AccessResult } from '../../../backend/functions/src/adminContract';
+import type { AccessResult } from './adminContract';
 const Session = createContext<{
     user: User | null;
     access: AccessResult | null;

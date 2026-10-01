@@ -1,0 +1,55 @@
+name: Publish browser admin
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: admin-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/configure-pages@v5
+      - run: npm ci
+      - name: Configure Firebase web client
+        env:
+          WEB_CONFIG: ${{ vars.FIREBASE_WEB_CONFIG }}
+          MAP_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const config = JSON.parse(process.env.WEB_CONFIG);
+          const fields = { API_KEY: config.apiKey, AUTH_DOMAIN: config.authDomain, PROJECT_ID: config.projectId, APP_ID: config.appId, DATABASE_URL: config.databaseURL };
+          let output = '';
+          for (const [key, value] of Object.entries(fields)) {
+            if (!value) throw new Error(`Missing Firebase ${key}`);
+            output += `VITE_FIREBASE_${key}=${value}\n`;
+          }
+          if (!process.env.MAP_TOKEN) throw new Error('Missing map token');
+          output += `VITE_FIREBASE_FUNCTIONS_REGION=europe-west3\nVITE_MAPBOX_TOKEN=${process.env.MAP_TOKEN}\nVITE_USE_EMULATORS=false\nVITE_BUILD_COMMIT=${process.env.GITHUB_SHA}\n`;
+          fs.writeFileSync('.env.production.local', output);
+          JS
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

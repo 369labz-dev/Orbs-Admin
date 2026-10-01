@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { doc, collection, onSnapshot } from 'firebase/firestore';
 import { useParams } from 'react-router-dom';
 import { firestore } from './firebase';
-import type { Orb, OrbEvent } from '../../../backend/functions/src/model';
+import type { Orb, OrbEvent } from './model';
 export type WebOrb = Orb & {
     id: string;
 };

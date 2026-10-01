@@ -1,10 +1,12 @@
 # Browser admin release record
 
-Implementation branch: `sburdenko/browser-admin`.
+Backend implementation branch: `sburdenko/browser-admin`.
+Client repository: `369labz-dev/Orbs-Admin`.
 
 ## Delivered
 
-The browser client lives in `admin/` alongside the Unity application and backend.
+The browser client lives in the public `369labz-dev/Orbs-Admin` repository.
+Unity and backend remain in the private `369labz-dev/Orbs-MVP` repository.
 It includes email/password login and password reset, organizer access, event-assigned
 redemption staff, event creation/copy, launch readiness, lifecycle controls, map and
 zone editing, inventory, settings, activity monitoring, code fulfillment, staff
@@ -45,14 +47,10 @@ The Firebase Web App was registered and `369labz-dev.github.io` added to Auth
 authorized domains. Public SDK configuration is held in the repository variable
 `FIREBASE_WEB_CONFIG`; the existing `MAPBOX_TOKEN` secret supplies the map build.
 
-## Hosting dependency
+## Hosting
 
-GitHub rejected Pages activation for the private `369labz-dev/Orbs-MVP` repository
-with HTTP 422: "Your current plan does not support GitHub Pages for this repository."
-The organization currently uses the Free plan. No source repository visibility
-was changed and no working Pages URL is claimed.
-
-The remaining publication decision is either an eligible organization plan for
-private-repository Pages, or explicit approval for a separate public repository
-containing only the compiled browser assets. The current Pages workflow targets
-the private source repository and `/Orbs-MVP/` base path.
+The user approved a separate public client repository after GitHub rejected Pages
+activation for the private repository's Free plan. Source and compiled browser assets
+are hosted in `369labz-dev/Orbs-Admin`; the backend remains private.
+The public client has its own API types, Pages workflow and `/Orbs-Admin/` base path.
+The site address is https://369labz-dev.github.io/Orbs-Admin/.

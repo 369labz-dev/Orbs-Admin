@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminCall } from './firebase';
-import type { AdminRequest } from '../../../backend/functions/src/adminContract';
+import type { AdminRequest } from './adminContract';
 export const time = (ms?: number | null) => ms ? new Date(ms).toLocaleString(undefined, { timeZoneName: 'short' }) : '—';
 export const tierLabel = (type: string) => type === 'epic' ? 'Legendary' : type.charAt(0).toUpperCase() + type.slice(1);
 export function useAdminQuery(request: Partial<AdminRequest> & Pick<AdminRequest, 'action'>, interval?: number, enabled = true) {
