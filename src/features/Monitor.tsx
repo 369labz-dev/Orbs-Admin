@@ -1,0 +1,21 @@
+import { useState } from 'react';
+import { useEvent } from '../lib/event';
+import { useAdminQuery, PageTitle, Notice, Freshness, time, tierLabel, Empty } from '../lib/ui';
+export function Monitor() {
+    const { eventId, orbs } = useEvent(), summary = useAdminQuery({ action: 'summary', eventId }, 5000);
+    const [tab, setTab] = useState('claims'), [category, setCategory] = useState(''), [tier, setTier] = useState(''), [actor, setActor] = useState(''), [cursor, setCursor] = useState<string>(), [previous, setPrevious] = useState<any[]>([]);
+    const query = useAdminQuery({ action: tab === 'claims' ? 'listClaims' : tab === 'leaderboard' ? 'listLeaderboard' : 'listAudit', eventId,
+        category: tab === 'audit' ? category || undefined : undefined, tier: tab === 'claims' ? tier || undefined : undefined,
+        actorUid: tab === 'audit' ? actor || undefined : undefined, cursor }, cursor ? undefined : 5000);
+    const s = summary.data, items = [...previous, ...(query.data?.items ?? [])];
+    const resetPages = () => { setCursor(undefined); setPrevious([]); };
+    return <><PageTitle title="Live monitoring" description="Server-confirmed claims, reward handovers and event activity."/><Freshness query={summary}/><Notice error={summary.error || query.error}/>
+    <div className="metrics cards">{[['Active players', s?.activePlayers], ['Claims', s?.claims], ['Unique winners', s?.uniqueClaimWinners], ['Issued rewards', s?.issued], ['Redeemed rewards', s?.redeemed], ['Outstanding', s?.outstanding]].map(([label, value]) => <div key={String(label)}><span>{label}</span><strong>{value ?? '—'}</strong></div>)}</div>
+    <div className="status-strip">{['available', 'locked', 'claimed', 'expired'].map(status => <span key={status}><strong>{orbs.filter(o => o.status === status).length}</strong> {status}</span>)}</div>
+    <div className="tabs" role="tablist" aria-label="Monitoring views">{['claims', 'leaderboard', 'audit'].map(t => <button role="tab" aria-selected={tab === t} key={t} className={tab === t ? 'selected' : ''} onClick={() => { setTab(t); resetPages(); }}>{t === 'audit' ? 'Activity journal' : t === 'claims' ? 'Claims' : 'Leaderboard'}</button>)}</div>
+    <div className="toolbar">{tab === 'claims' && <label>Tier<select value={tier} onChange={e => { setTier(e.target.value); resetPages(); }}><option value="">All tiers</option>{['common', 'rare', 'epic'].map(t => <option value={t} key={t}>{tierLabel(t)}</option>)}</select></label>}{tab === 'audit' && <><label>Category<select value={category} onChange={e => { setCategory(e.target.value); resetPages(); }}><option value="">All activity</option>{['event', 'orbs', 'inventory', 'staff', 'redemption', 'gameplay'].map(c => <option key={c}>{c}</option>)}</select></label><label>Actor UID<input value={actor} onChange={e => { setActor(e.target.value); resetPages(); }} placeholder="Exact UID"/></label></>}</div>
+    <div className="table-wrap"><table><thead><tr>{(tab === 'claims' ? ['Claimed', 'Orb / reward', 'Tier', 'Winner', 'Points', 'Redemption'] : tab === 'leaderboard' ? ['Rank', 'Player', 'Points', 'Wins', 'First arrivals', 'Consolations'] : ['Time', 'Actor', 'Action', 'Details']).map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{items.map((r: any) => <tr key={r.id}>{tab === 'claims' ? <><td>{time(r.claimedAt)}</td><td><strong>{r.prize || 'Points only'}</strong><small>{r.id}</small></td><td>{tierLabel(r.type)}</td><td>{r.claimedByName || r.claimedBy}</td><td>{r.pointsAwarded ?? 0}</td><td>{r.rewardKind === 'points' ? '—' : r.redeemed ? 'Redeemed' : 'Outstanding'}</td></> : tab === 'leaderboard' ? <><td>{r.rank}</td><td>{r.name || r.id}</td><td><strong>{r.points}</strong></td><td>{r.wins ?? 0}</td><td>{r.firstArrivals ?? 0}</td><td>{r.consolations ?? 0}</td></> : <><td>{time(r.ts)}</td><td>{r.playerId || 'System'}</td><td>{r.type.replaceAll('_', ' ')}</td><td className="details">{JSON.stringify(r.payload)}</td></>}</tr>)}</tbody></table></div>
+    {!query.isPending && !items.length && <Empty>No records in this view yet.</Empty>}{query.data?.nextCursor && <button onClick={() => { setPrevious(items); setCursor(query.data.nextCursor); }}>Load more</button>}
+    <p className="muted">Active means a validated position in the last 30 seconds. It is not a registration count.</p>
+  </>;
+}
