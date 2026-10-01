@@ -53,4 +53,11 @@ The user approved a separate public client repository after GitHub rejected Page
 activation for the private repository's Free plan. Source and compiled browser assets
 are hosted in `369labz-dev/Orbs-Admin`; the backend remains private.
 The public client has its own API types, Pages workflow and `/Orbs-Admin/` base path.
-The site address is https://369labz-dev.github.io/Orbs-Admin/.
+After extraction, the standalone production build and all five Chromium acceptance
+tests passed again (17.9 seconds). No local backend imports remain.
+
+Pages activation is currently blocked by organization policy:
+`members_can_create_public_pages=false`. The authenticated account is a member,
+not an organization owner. The user chose to retain the repository in the organization;
+an owner must permit publication or activate this repository's Pages site. The prepared
+site address is https://369labz-dev.github.io/Orbs-Admin/; it is not live yet.

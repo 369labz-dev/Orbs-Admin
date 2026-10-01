@@ -2,7 +2,7 @@
 
 Browser organizer and redemption portal for Orbs.
 
-- Application: https://369labz-dev.github.io/Orbs-Admin/
+- Application (awaiting Pages activation): https://369labz-dev.github.io/Orbs-Admin/
 - Backend and Unity client: private `369labz-dev/Orbs-MVP` repository.
 - [Implementation specification](docs/browser-admin-spec.md).
 - [Release record](docs/browser-admin-release.md).
